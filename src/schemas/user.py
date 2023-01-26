@@ -1,7 +1,7 @@
 from datetime import datetime
 from pydantic import EmailStr, UUID1
 
-from auth import ORM
+from .auth import ORM
 
 
 class User(ORM):

@@ -15,7 +15,8 @@ class AppSettings(BaseSettings):
     app_title: str
     database_dsn: PostgresDsn
     project_name: str
-    project_host: int
+    project_host: str
+    project_port: int
     secret_key: str
     algorithm: str
     token_expire_minutes: int
