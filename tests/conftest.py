@@ -68,13 +68,13 @@ async def test_app(engine, create_base):
 
 
 @pytest_asyncio.fixture(scope='session')
-async def auth_async_client(test_app):
+async def auth_async_client(test_app, base_url):
     input_data = {
         'username': 'test_user',
         'password': 'test_password',
         'email': 'test_user@example.com'
     }
-    async with AsyncClient(app=test_app, base_url=BASE_URL) as ac:
+    async with AsyncClient(app=test_app, base_url=base_url) as ac:
         await ac.post(
             test_app.url_path_for('create_user'),
             json=input_data

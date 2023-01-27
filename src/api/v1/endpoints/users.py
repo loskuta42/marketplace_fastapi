@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.db.db import get_session
 from src.schemas import user as user_schema
 from src.services.base import user_crud
+from src.services.authorization import get_current_user
 
 
 logger = logging.getLogger('users')
@@ -48,6 +49,7 @@ async def create_user(
 async def get_user(
         *,
         db: AsyncSession = Depends(get_session),
+        current_user: user_schema.UserInDB = Depends(get_current_user),
         user_id: str
 ) -> Any:
     """
@@ -59,6 +61,6 @@ async def get_user(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='User not found.'
         )
-    logger.info('Return user info with id %s', user_id)
+    logger.info('Return user info with id %s to user with id %s', user_id, current_user.id)
     return user_obj
 
