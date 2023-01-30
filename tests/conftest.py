@@ -9,11 +9,14 @@ from httpx import AsyncClient
 from src.db.db import Base, get_session
 from src.core.config import app_settings
 from src.main import app
+from src.services.base import user_crud
+from src.models.models import User
+from src.models.enums import UserRoles
 
 DATABASE_URL = 'sqlite+aiosqlite:///./test.db'
 
 
-@pytest.fixture()
+@pytest.fixture(scope='session')
 def base_url():
     return f'http://{app_settings.project_host}:{app_settings.project_port}'
 
@@ -42,6 +45,12 @@ def async_session(engine):
     return sessionmaker(
         engine, class_=AsyncSession, expire_on_commit=False
     )
+
+
+@pytest_asyncio.fixture(scope='session')
+async def gen_async_session(async_session) -> AsyncSession:
+    async with async_session() as session:
+        yield session
 
 
 @pytest_asyncio.fixture(scope='session')
@@ -86,3 +95,29 @@ async def auth_async_client(test_app, base_url):
         token = 'Bearer ' + response_success.json()['access_token']
         ac.headers = {'Authorization': token}
         yield ac
+
+
+@pytest_asyncio.fixture(scope='session')
+async def new_user(gen_async_session: AsyncSession) -> User:
+    gen_numbers = (number for number in range(1, 100))
+    data = {
+        'username': f'test_user{next(gen_numbers)}',
+        'password': f'test_password{next(gen_numbers)}',
+        'email': f'test_user{next(gen_numbers)}@example.com'
+    }
+    db = gen_async_session
+    user = await user_crud.create(db=db, obj_in=data)
+    return user
+
+
+@pytest_asyncio.fixture(scope='session')
+async def new_admin(gen_async_session: AsyncSession) -> User:
+    data = {
+        'username': 'admin_user',
+        'password': 'admin_password',
+        'email': 'admin@example.com',
+        'role': UserRoles.ADMIN
+    }
+    db = gen_async_session
+    user_admin = await user_crud.create(db=db, obj_in=data)
+    return user_admin

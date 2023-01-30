@@ -4,6 +4,8 @@ import pytest
 from httpx import AsyncClient
 from fastapi import FastAPI
 
+from src.models.models import User
+
 
 @pytest.mark.asyncio
 async def test_01_users_create(test_app: FastAPI, base_url: str):
@@ -18,7 +20,7 @@ async def test_01_users_create(test_app: FastAPI, base_url: str):
             json=input_data
         )
         assert response_create.status_code == HTTPStatus.CREATED, (
-            'Check that POST request to `/api/v1/users/` with wrong data returns 201 status'
+            'Check that POST request to `/api/v1/users/` with  data returns 201 status'
         )
         response_data = response_create.json()
         input_data.pop('password')
@@ -31,6 +33,33 @@ async def test_01_users_create(test_app: FastAPI, base_url: str):
 
 
 @pytest.mark.asyncio
-async def test_02_users_get(test_app: FastAPI, base_url: str):
-    # TODO
+async def test_02_users_get(
+        auth_async_client: AsyncClient,
+        new_user: User,
+        test_app: FastAPI
+):
+    user_id = new_user.id
+    url = test_app.url_path_for('get_user', user_id=user_id)
+    response = await auth_async_client.get(
+        url
+    )
+    assert response.status_code == HTTPStatus.OK, (
+        'Check that GET request to `/api/v1/users/{id}` with data returns 201 status'
+    )
+    response_data = response.json()
+    fields = ['username', 'created_at', 'email']
+    for field in fields:
+        assert field in response_data, (
+            f'Make sure that the get request `{test_app.url_path_for("get_user")}` '
+            f'with the correct data returns {field}'
+        )
+
+
+@pytest.mark.asyncio
+async def test_03_users_patch():
+    pass
+
+
+@pytest.mark.asyncio
+async def test_03_users_delete():
     pass

@@ -1,5 +1,5 @@
 from datetime import datetime
-from pydantic import EmailStr, UUID1
+from pydantic import EmailStr, UUID1, BaseModel
 
 from .auth import ORM
 
@@ -28,3 +28,7 @@ class UserRegisterResponse(User):
 class UserInDB(User):
     id: UUID1
     created_at: datetime
+    role: int
+
+class UserDelete(BaseModel):
+    info: str

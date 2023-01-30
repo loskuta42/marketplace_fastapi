@@ -106,9 +106,9 @@ class RepositoryUserDB(
             db: AsyncSession,
             *,
             user_obj: ModelType,
-            obj_in: Union[UpdateSchemaType, dict[str, Any]]
+            user_in: Union[UpdateSchemaType, dict[str, Any]]
     ) -> ModelType:
-        obj_in_data = jsonable_encoder(obj_in, exclude_none=True)
+        obj_in_data = jsonable_encoder(user_in, exclude_none=True)
         for key, value in obj_in_data.items():
             setattr(user_obj, key, value)
         db.add(user_obj)
