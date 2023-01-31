@@ -1,7 +1,10 @@
 from datetime import datetime
+from typing import Optional
+
 from pydantic import EmailStr, UUID1, BaseModel
 
 from .auth import ORM
+from src.models.enums import UserRoles
 
 
 class User(ORM):
@@ -14,7 +17,8 @@ class UserRegister(User):
 
 
 class UserUpgrade(User):
-    pass
+    username: Optional[str]
+    email: Optional[str]
 
 
 class UserAuth(UserRegister):
@@ -28,7 +32,12 @@ class UserRegisterResponse(User):
 class UserInDB(User):
     id: UUID1
     created_at: datetime
-    role: int
+    role: UserRoles
+
+
+class UserMulti(BaseModel):
+    __root__: list[UserInDB]
+
 
 class UserDelete(BaseModel):
     info: str

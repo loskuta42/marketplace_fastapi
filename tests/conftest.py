@@ -5,6 +5,7 @@ import pytest_asyncio
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from httpx import AsyncClient
+from fastapi import FastAPI
 
 from src.db.db import Base, get_session
 from src.core.config import app_settings
@@ -77,17 +78,41 @@ async def test_app(engine, create_base):
 
 
 @pytest_asyncio.fixture(scope='session')
-async def auth_async_client(test_app, base_url):
+async def async_client(test_app: FastAPI, base_url: str):
+    async with AsyncClient(app=test_app, base_url=base_url) as ac:
+        yield ac
+
+
+@pytest_asyncio.fixture(scope='session')
+async def auth_async_client(gen_async_session: AsyncSession, test_app: FastAPI, base_url: str):
     input_data = {
         'username': 'test_user',
         'password': 'test_password',
         'email': 'test_user@example.com'
     }
+    db = gen_async_session
+    await user_crud.create(db=db, obj_in=input_data)
     async with AsyncClient(app=test_app, base_url=base_url) as ac:
-        await ac.post(
-            test_app.url_path_for('create_user'),
+        response_success = await ac.post(
+            test_app.url_path_for('get_token_for_user'),
             json=input_data
         )
+        token = 'Bearer ' + response_success.json()['access_token']
+        ac.headers = {'Authorization': token}
+        yield ac
+
+
+@pytest_asyncio.fixture(scope='session')
+async def auth_async_admin_client(gen_async_session: AsyncSession, test_app: FastAPI, base_url: str):
+    input_data = {
+        'username': 'test_user_admin',
+        'password': 'test_admin_password',
+        'email': 'test_admin@example.com',
+        'role': UserRoles.ADMIN
+    }
+    db = gen_async_session
+    await user_crud.create(db=db, obj_in=input_data)
+    async with AsyncClient(app=test_app, base_url=base_url) as ac:
         response_success = await ac.post(
             test_app.url_path_for('get_token_for_user'),
             json=input_data

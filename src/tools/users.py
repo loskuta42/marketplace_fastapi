@@ -15,8 +15,8 @@ async def check_user_by_id(db: AsyncSession, user_id: str) -> User:
     return user_obj
 
 
-def check_staff_or_author_permission(cur_user_obj: User, author_id: str) -> None:
-    if not (cur_user_obj.id == author_id or cur_user_obj.is_staff):
+def check_staff_or_owner_permission(cur_user_obj: User, owner_id: str) -> None:
+    if not (cur_user_obj.id == owner_id or cur_user_obj.is_staff):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail='You have not permission for this action.'

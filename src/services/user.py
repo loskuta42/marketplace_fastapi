@@ -7,6 +7,7 @@ from sqlalchemy.future import select
 
 from src.db.db import Base
 from src.tools.password import get_password_hash
+from src.schemas import user as user_schema
 
 
 class Repository:
@@ -14,6 +15,9 @@ class Repository:
         raise NotImplementedError
 
     def get_by_id(self, *args, **kwargs):
+        raise NotImplementedError
+
+    def get_multi(self, *args, **kwargs):
         raise NotImplementedError
 
     def create(self, *args, **kwargs):
@@ -72,7 +76,7 @@ class RepositoryUserDB(
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
 
-    async def get_multi_users(
+    async def get_multi(
             self,
             db: AsyncSession,
             *,
