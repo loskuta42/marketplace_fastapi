@@ -21,6 +21,12 @@ class AppSettings(BaseSettings):
     algorithm: str
     token_expire_minutes: int
     base_dir: str = Field(BASE_DIR, env='BASE_DIR')
+    mail_username: str
+    mail_password: str
+    mail_from: str
+    mail_port: int
+    mail_sever: str
+    mail_from_name: str
 
     class Config:
         env_file = os.path.dirname(BASE_DIR) + '/.env'

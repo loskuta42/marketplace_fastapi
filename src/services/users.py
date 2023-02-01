@@ -17,6 +17,9 @@ class Repository:
     def get_by_id(self, *args, **kwargs):
         raise NotImplementedError
 
+    def get_by_email(self, *args, **kwargs):
+        raise NotImplementedError
+
     def get_multi(self, *args, **kwargs):
         raise NotImplementedError
 
@@ -52,13 +55,27 @@ class RepositoryUserDB(
     async def get_by_username(
             self,
             db: AsyncSession,
-            obj_in: CreateSchemaType
+            obj_in: Union[CreateSchemaType, UpdateSchemaType],
     ) -> Optional[ModelType]:
         obj_in_data = jsonable_encoder(obj_in)
         statement = select(
             self._model
         ).where(
             self._model.username == obj_in_data['username']
+        )
+        results = await db.execute(statement=statement)
+        return results.scalar_one_or_none()
+
+    async def get_by_email(
+            self,
+            db: AsyncSession,
+            obj_in: Union[CreateSchemaType, UpdateSchemaType]
+    ) -> Optional[ModelType]:
+        obj_in_data = jsonable_encoder(obj_in)
+        statement = select(
+            self._model
+        ).where(
+            self._model.username == obj_in_data['email']
         )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
@@ -113,6 +130,7 @@ class RepositoryUserDB(
             user_in: Union[UpdateSchemaType, dict[str, Any]]
     ) -> ModelType:
         obj_in_data = jsonable_encoder(user_in, exclude_none=True)
+
         for key, value in obj_in_data.items():
             setattr(user_obj, key, value)
         db.add(user_obj)

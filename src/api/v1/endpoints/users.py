@@ -10,7 +10,12 @@ from src.schemas import user as user_schema
 from src.services.base import user_crud
 from src.services.authorization import get_current_user
 from src.models.models import User
-from src.tools.users import check_user_by_id, check_staff_or_owner_permission, check_staff_permission
+from src.tools.users import (
+    check_user_by_id,
+    check_staff_or_owner_permission,
+    check_staff_permission,
+    check_for_duplicating_user
+)
 
 logger = logging.getLogger('users')
 
@@ -101,6 +106,7 @@ async def patch_user(
     """
     user_obj = await check_user_by_id(db=db, user_id=user_id)
     check_staff_permission(cur_user_obj=current_user)
+    await check_for_duplicating_user(db=db, user_in=user_in, user_obj=user_obj)
     user_obj_patched = await user_crud.patch(
         db=db,
         user_obj=user_obj,
@@ -141,7 +147,7 @@ async def delete_user(
 
 
 @router.get(
-    '/me',
+    '/me/',
     response_model=user_schema.UserInDB,
     description='Get personal user info.'
 )
@@ -159,8 +165,8 @@ async def get_personal_info(
 
 
 @router.patch(
-    '/me',
-    response_model=user_schema.UserUpgrade,
+    '/me/',
+    response_model=user_schema.UserInDB,
     description='Patch personal user info'
 )
 async def patch_personal_info(
@@ -172,6 +178,7 @@ async def patch_personal_info(
     """
     Get personal current user info.
     """
+    await check_for_duplicating_user(db=db, user_in=user_in, user_obj=current_user)
     user_obj_patched = await user_crud.patch(
         db=db,
         user_obj=current_user,
