@@ -77,7 +77,6 @@ class RepositoryUserDB(
             ]
     ) -> Optional[ModelType]:
         obj_in_data = jsonable_encoder(obj_in)
-        print('--------', obj_in_data['email'])
         statement = select(
             self._model
         ).where(

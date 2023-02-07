@@ -216,7 +216,6 @@ async def test_08_users_forget_password(
         response = await async_client.post(url, json=data)
         assert response.status_code == 200
         assert len(outbox) == 1
-        print(outbox[0]['body'])
         assert outbox[0]['from'] == 'Alexey <loskuta42@yandex.ru>'
         assert outbox[0]['To'] == f'{new_user.email}'
 
