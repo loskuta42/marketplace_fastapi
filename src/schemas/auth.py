@@ -18,3 +18,7 @@ class TokenUI(Token):
 
 class TokenData(ORM):
     username: Optional[str] = None
+
+
+class ResetToken(ORM):
+    access_token: str

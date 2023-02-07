@@ -4,7 +4,7 @@ from fastapi.encoders import jsonable_encoder
 
 from src.services.base import user_crud
 from src.models.models import User
-from src.schemas import user as user_schema
+from src.schemas import users as user_schema
 
 
 async def check_user_by_id(db: AsyncSession, user_id: str) -> User:
@@ -53,3 +53,16 @@ async def check_for_duplicating_user(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='User with this username already exists'
             )
+
+
+async def check_user_by_email(
+        db: AsyncSession,
+        user_in: user_schema.ForgetPasswordRequestBody
+) -> User:
+    user_obj = await user_crud.get_by_email(db=db, obj_in=user_in)
+    if not user_obj:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail='User not found.'
+        )
+    return user_obj

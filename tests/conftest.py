@@ -125,10 +125,11 @@ async def auth_async_admin_client(gen_async_session: AsyncSession, test_app: Fas
 @pytest_asyncio.fixture(scope='session')
 async def new_user(gen_async_session: AsyncSession) -> User:
     gen_numbers = (number for number in range(1, 100))
+    num = next(gen_numbers)
     data = {
-        'username': f'test_user{next(gen_numbers)}',
-        'password': f'test_password{next(gen_numbers)}',
-        'email': f'test_user{next(gen_numbers)}@example.com'
+        'username': f'test_user{num}',
+        'password': f'test_password{num}',
+        'email': f'test_user{num}@example.com'
     }
     db = gen_async_session
     user = await user_crud.create(db=db, obj_in=data)

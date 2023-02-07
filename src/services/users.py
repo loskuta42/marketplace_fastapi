@@ -7,7 +7,6 @@ from sqlalchemy.future import select
 
 from src.db.db import Base
 from src.tools.password import get_password_hash
-from src.schemas import user as user_schema
 
 
 class Repository:
@@ -36,6 +35,7 @@ class Repository:
 ModelType = TypeVar('ModelType', bound=Base)
 CreateSchemaType = TypeVar('CreateSchemaType', bound=BaseModel)
 UpdateSchemaType = TypeVar('UpdateSchemaType', bound=BaseModel)
+ForgetPasswordSchemaType = TypeVar('ForgetPasswordSchemaType', bound=BaseModel)
 
 
 class RepositoryUserDB(
@@ -43,7 +43,8 @@ class RepositoryUserDB(
     Generic[
         ModelType,
         CreateSchemaType,
-        UpdateSchemaType
+        UpdateSchemaType,
+        ForgetPasswordSchemaType
     ]
 ):
     def __init__(
@@ -69,13 +70,18 @@ class RepositoryUserDB(
     async def get_by_email(
             self,
             db: AsyncSession,
-            obj_in: Union[CreateSchemaType, UpdateSchemaType]
+            obj_in: Union[
+                CreateSchemaType,
+                UpdateSchemaType,
+                ForgetPasswordSchemaType
+            ]
     ) -> Optional[ModelType]:
         obj_in_data = jsonable_encoder(obj_in)
+        print('--------', obj_in_data['email'])
         statement = select(
             self._model
         ).where(
-            self._model.username == obj_in_data['email']
+            self._model.email == obj_in_data['email']
         )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()

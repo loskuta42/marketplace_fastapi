@@ -1,5 +1,5 @@
 from src.models.models import User as UserModel
-from src.schemas.user import UserRegister, UserUpgrade
+from src.schemas.users import UserRegister, UserUpgrade, ForgetPasswordRequestBody
 
 from .users import RepositoryUserDB
 
@@ -8,7 +8,8 @@ class RepositoryUser(
     RepositoryUserDB[
         UserModel,
         UserRegister,
-        UserUpgrade
+        UserUpgrade,
+        ForgetPasswordRequestBody
     ]
 ):
     pass

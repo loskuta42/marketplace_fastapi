@@ -5,6 +5,7 @@ from httpx import AsyncClient
 from fastapi import FastAPI
 
 from src.models.models import User
+from src.main import fast_mail
 
 
 @pytest.mark.asyncio
@@ -147,7 +148,7 @@ async def test_05_users_delete_admin(
 
 
 @pytest.mark.asyncio
-async def test_06_user_me_get(
+async def test_06_users_me_get(
         auth_async_client: AsyncClient,
         async_client: AsyncClient,
         test_app: FastAPI
@@ -173,7 +174,7 @@ async def test_06_user_me_get(
 
 
 @pytest.mark.asyncio
-async def test_07_user_me_patch(
+async def test_07_users_me_patch(
         auth_async_client: AsyncClient,
         async_client: AsyncClient,
         test_app: FastAPI
@@ -198,3 +199,25 @@ async def test_07_user_me_patch(
         'Make sure that the PATCH request `/api/v1/users/me/` '
         'with the correct data returns username'
     )
+
+
+@pytest.mark.asyncio
+async def test_08_users_forget_password(
+        async_client: AsyncClient,
+        test_app: FastAPI,
+        new_user: User
+):
+    data = {
+        'email': f'{new_user.email}'
+    }
+    url = test_app.url_path_for('forget_password')
+    fast_mail.config.SUPPRESS_SEND = 1
+    with fast_mail.record_messages() as outbox:
+        response = await async_client.post(url, json=data)
+        assert response.status_code == 200
+        assert len(outbox) == 1
+        print(outbox[0]['body'])
+        assert outbox[0]['from'] == 'Alexey <loskuta42@yandex.ru>'
+        assert outbox[0]['To'] == f'{new_user.email}'
+
+

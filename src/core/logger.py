@@ -51,6 +51,14 @@ LOGGING = {
         'users': {
             'handlers': ['console'],
             'level': 'INFO'
+        },
+        'get_token': {
+            'handlers': ['console'],
+            'level': 'INFO'
+        },
+        'reset_password': {
+            'handlers': ['console'],
+            'level': 'INFO'
         }
     },
     'root': {

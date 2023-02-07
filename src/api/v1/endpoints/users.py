@@ -4,9 +4,10 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from fastapi_mail import MessageSchema, MessageType
 
 from src.db.db import get_session
-from src.schemas import user as user_schema
+from src.schemas import users as user_schema
 from src.services.base import user_crud
 from src.services.authorization import get_current_user
 from src.models.models import User
@@ -14,8 +15,15 @@ from src.tools.users import (
     check_user_by_id,
     check_staff_or_owner_permission,
     check_staff_permission,
-    check_for_duplicating_user
+    check_for_duplicating_user,
+    check_user_by_email
 )
+from src.tools.reset_password import (
+    get_reset_token,
+    get_user_by_reset_token,
+    get_auth_token_for_reset_password
+)
+from src.core.config import app_settings, mail_config
 
 logger = logging.getLogger('users')
 
@@ -186,3 +194,53 @@ async def patch_personal_info(
     )
     logger.info(f'Partial update {current_user.username} info.')
     return user_obj_patched
+
+
+@router.post(
+    '/forget-password/',
+    response_model=user_schema.ForgetPasswordResponse,
+    description='Send email for password reset'
+)
+async def forget_password(
+        *,
+        db: AsyncSession = Depends(get_session),
+        user_in: user_schema.ForgetPasswordRequestBody
+):
+    """
+    Send email for password reset.
+    """
+    from src.main import app, fast_mail
+    user_obj = await check_user_by_email(db=db, user_in=user_in)
+    reset_token = await get_reset_token(db=db, user_in=user_in)
+    url = (app_settings.project_host +
+           str(app_settings.project_port) +
+           app.url_path_for('confirm_reset_token', reset_token=reset_token))
+    email_data = {
+        'username': user_obj.username,
+        'url': url
+    }
+    email = user_in.dict().get('email')
+    message = MessageSchema(
+        subject='Reset password',
+        recipients=[email],
+        template_body=email_data,
+        subtype=MessageType.html
+    )
+    await fast_mail.send_message(message, template_name='email.html')
+    return {'info': f'reset password email has been sent to {email}'}
+
+
+@router.get(
+    '/reset-password/{reset_token}',
+    response_model=user_schema.ResetToken,
+    description='Confirm reset token and return access token'
+)
+async def confirm_reset_token(
+        *,
+        db: AsyncSession = Depends(get_session),
+        reset_token: str
+):
+    user = await get_user_by_reset_token(db=db, reset_token=reset_token)
+    token = get_auth_token_for_reset_password(user)
+    return token
+

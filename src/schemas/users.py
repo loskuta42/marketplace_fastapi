@@ -3,7 +3,7 @@ from typing import Optional
 
 from pydantic import EmailStr, UUID1, BaseModel
 
-from .auth import ORM
+from .auth import ORM, Token
 from src.models.enums import UserRoles
 
 
@@ -41,3 +41,15 @@ class UserMulti(BaseModel):
 
 class UserDelete(BaseModel):
     info: str
+
+
+class ForgetPasswordResponse(UserDelete):
+    pass
+
+
+class ForgetPasswordRequestBody(BaseModel):
+    email: EmailStr
+
+
+class ResetToken(Token):
+    pass

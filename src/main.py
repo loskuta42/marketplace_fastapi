@@ -1,8 +1,9 @@
 import uvicorn
 from fastapi import FastAPI
 from fastapi.responses import ORJSONResponse
+from fastapi_mail import FastMail
 
-from src.core.config import app_settings
+from src.core.config import app_settings, mail_config
 from src.api.v1 import base
 
 
@@ -13,6 +14,8 @@ app = FastAPI(
     default_response_class=ORJSONResponse,
     swagger_ui_oauth2_redirect_url='/authorization/token'
 )
+
+fast_mail = FastMail(config=mail_config)
 
 app.include_router(base.api_router, prefix='/api/v1')
 
