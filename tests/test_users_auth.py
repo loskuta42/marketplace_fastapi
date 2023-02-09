@@ -1,4 +1,6 @@
 from http import HTTPStatus
+from base64 import b64decode
+import re
 
 import pytest
 from httpx import AsyncClient
@@ -202,7 +204,7 @@ async def test_07_users_me_patch(
 
 
 @pytest.mark.asyncio
-async def test_08_users_forget_password(
+async def test_08_users_forget_and_reset_password(
         async_client: AsyncClient,
         test_app: FastAPI,
         new_user: User
@@ -210,13 +212,27 @@ async def test_08_users_forget_password(
     data = {
         'email': f'{new_user.email}'
     }
-    url = test_app.url_path_for('forget_password')
+    url_forget_password = test_app.url_path_for('forget_password')
     fast_mail.config.SUPPRESS_SEND = 1
     with fast_mail.record_messages() as outbox:
-        response = await async_client.post(url, json=data)
-        assert response.status_code == 200
+        response = await async_client.post(url_forget_password, json=data)
+        assert response.status_code == HTTPStatus.OK
         assert len(outbox) == 1
         assert outbox[0]['from'] == 'Alexey <loskuta42@yandex.ru>'
         assert outbox[0]['To'] == f'{new_user.email}'
-
-
+        message = b64decode('\n'.join(outbox[0].get_payload()[0].as_string().split('\n')[4:10])).decode()
+        pattern = re.compile(r'http\S+')
+        token = pattern.search(message).group().split('/')[-1]
+        url_confirm_res_password = test_app.url_path_for('confirm_reset_token', reset_token=token)
+        response = await async_client.get(url_confirm_res_password)
+        assert response.status_code == HTTPStatus.OK
+        response_data = response.json()
+        assert 'access_token' in response_data
+        data = {
+            'new_password': 'new_test_password',
+            're_new_password': 'new_test_password'
+        }
+        url_res_password = test_app.url_path_for('reset_password')
+        async_client.headers = {'Authorization': 'Bearer ' + token}
+        response = await async_client.patch(url_res_password, json=data)
+        assert response.status_code == HTTPStatus.OK

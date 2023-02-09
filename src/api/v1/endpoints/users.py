@@ -21,7 +21,8 @@ from src.tools.users import (
 from src.tools.reset_password import (
     get_reset_token,
     get_user_by_reset_token,
-    get_auth_token_for_reset_password
+    get_auth_token_for_reset_password,
+    reset_password_for_user
 )
 from src.core.config import app_settings, mail_config
 
@@ -212,7 +213,7 @@ async def forget_password(
     from src.main import app, fast_mail
     user_obj = await check_user_by_email(db=db, user_in=user_in)
     reset_token = await get_reset_token(db=db, user_in=user_in)
-    url = (app_settings.project_host +
+    url = ('http://'+app_settings.project_host + ':' +
            str(app_settings.project_port) +
            app.url_path_for('confirm_reset_token', reset_token=reset_token))
     email_data = {
@@ -232,6 +233,7 @@ async def forget_password(
 
 @router.get(
     '/reset-password/{reset_token}',
+    status_code=status.HTTP_200_OK,
     response_model=user_schema.ResetToken,
     description='Confirm reset token and return access token'
 )
@@ -243,4 +245,20 @@ async def confirm_reset_token(
     user = await get_user_by_reset_token(db=db, reset_token=reset_token)
     token = get_auth_token_for_reset_password(user)
     return token
+
+
+@router.patch(
+    '/reset-password/',
+    response_model=user_schema.ResetPasswordResponse,
+    description='Reset password for user'
+)
+async def reset_password(
+        *,
+        db: AsyncSession = Depends(get_session),
+        current_user: User = Depends(get_current_user),
+        user_in: user_schema.ResetPassword
+):
+    user = await reset_password_for_user(db=db, user=current_user, user_in=user_in)
+    logger.info('Password successfully reset for user - %s', user.username)
+    return {'info': 'Password successfully reset.'}
 

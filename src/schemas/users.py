@@ -1,7 +1,8 @@
 from datetime import datetime
 from typing import Optional
 
-from pydantic import EmailStr, UUID1, BaseModel
+from pydantic import EmailStr, UUID1, BaseModel, validator
+from fastapi import HTTPException, status
 
 from .auth import ORM, Token
 from src.models.enums import UserRoles
@@ -53,3 +54,22 @@ class ForgetPasswordRequestBody(BaseModel):
 
 class ResetToken(Token):
     pass
+
+
+class ResetPasswordResponse(UserDelete):
+    pass
+
+
+class ResetPassword(BaseModel):
+    new_password: str
+    re_new_password: str
+
+    @validator('re_new_password', pre=True)
+    def validate_re_password(cls, value, values):
+        if value != values['new_password']:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail='re_new_password must be equel to new_password'
+            )
+        return value
+
