@@ -262,3 +262,7 @@ async def reset_password(
     logger.info('Password successfully reset for user - %s', user.username)
     return {'info': 'Password successfully reset.'}
 
+# @router.patch(
+#     '/change-password/',
+#     response_model=user_schema
+# )

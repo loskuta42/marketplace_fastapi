@@ -59,6 +59,9 @@ class ResetToken(Token):
 class ResetPasswordResponse(UserDelete):
     pass
 
+class ChangePasswordResponse(ResetPasswordResponse):
+    pass
+
 
 class ResetPassword(BaseModel):
     new_password: str
@@ -72,4 +75,7 @@ class ResetPassword(BaseModel):
                 detail='re_new_password must be equel to new_password'
             )
         return value
+
+class ChangePassword(ResetPassword):
+    old_password: str
 

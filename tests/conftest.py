@@ -1,4 +1,5 @@
 import asyncio
+import time
 
 import pytest
 import pytest_asyncio
@@ -86,9 +87,9 @@ async def async_client(test_app: FastAPI, base_url: str):
 @pytest_asyncio.fixture(scope='session')
 async def auth_async_client(gen_async_session: AsyncSession, test_app: FastAPI, base_url: str):
     input_data = {
-        'username': 'test_user',
-        'password': 'test_password',
-        'email': 'test_user@example.com'
+        'username': 'test_user_auth',
+        'password': 'test_password_auth',
+        'email': 'test_user_auth@example.com'
     }
     db = gen_async_session
     await user_crud.create(db=db, obj_in=input_data)
@@ -133,7 +134,7 @@ async def new_user(gen_async_session: AsyncSession) -> User:
     }
     db = gen_async_session
     user = await user_crud.create(db=db, obj_in=data)
-    return user
+    yield user
 
 
 @pytest_asyncio.fixture(scope='session')
