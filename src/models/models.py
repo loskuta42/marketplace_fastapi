@@ -55,6 +55,4 @@ class Item(Base):
     name = Column(String(75), nullable=False)
 
 
-
 event.listen(Category.name, 'set', Category.generate_slug, retval=False)
-
