@@ -53,12 +53,18 @@ def create_access_token(data: dict, expire_delta: Optional[timedelta] = None):
     return encoded_jwt
 
 
-async def get_current_user(db: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
+def get_credentials_exception() -> HTTPException:
+    return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail='Could not validate credentials',
         headers={'WWW-Authenticate': 'Bearer'}
     )
+
+
+def get_token_data(
+        token: str,
+        credentials_exception: HTTPException
+) -> (auth_schema.TokenData, str):
     try:
         payload = jwt.decode(
             token,
@@ -68,13 +74,59 @@ async def get_current_user(db: AsyncSession = Depends(get_session), token: str =
         username: str = payload.get('sub')
         if username is None:
             raise credentials_exception
-        token_data = auth_schema.TokenData(username=username)
+        return auth_schema.TokenData(username=username)
     except JWTError:
         logging.exception('Exception at get_current func for token %s', token)
         raise credentials_exception
+
+
+async def get_user_by_token_data(
+        token_data: auth_schema.TokenData,
+        credentials_exception: HTTPException,
+        db: AsyncSession = Depends(get_session)
+) -> User:
     user = await get_user(db=db, username=token_data.username)
     if user is None:
         raise credentials_exception
+    return user
+
+
+async def get_current_user(db: AsyncSession = Depends(get_session), token: str = Depends(oauth2_scheme)):
+    credentials_exception = get_credentials_exception()
+    token_data = get_token_data(
+        token=token,
+        credentials_exception=credentials_exception
+    )
+    user = await get_user_by_token_data(
+        token_data=token_data,
+        credentials_exception=credentials_exception,
+        db=db
+    )
+    if user.reset_token and user.reset_token == token:
+        raise credentials_exception
+    return user
+
+
+async def get_current_user_for_reset_password(
+        db: AsyncSession = Depends(get_session),
+        token: str = Depends(oauth2_scheme)
+):
+    credentials_exception = get_credentials_exception()
+    reset_token_data = get_token_data(
+        token=token,
+        credentials_exception=credentials_exception
+    )
+    user = await get_user_by_token_data(
+        token_data=reset_token_data,
+        credentials_exception=credentials_exception,
+        db=db
+    )
+    if user.reset_token != token:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail='Available only for reset password with reset token',
+            headers={'WWW-Authenticate': 'Bearer'}
+        )
     return user
 
 

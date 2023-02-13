@@ -16,6 +16,7 @@ class User(Base):
     hashed_password = Column(String(125), nullable=False)
     created_at = Column(DateTime, index=True, default=datetime.utcnow)
     role = Column(ChoiceType(choices=UserRoles, impl=Integer()), default=UserRoles.USER)
+    reset_token = Column(String(500), nullable=True, default=None)
 
     @property
     def is_admin(self):

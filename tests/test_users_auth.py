@@ -143,30 +143,53 @@ async def test_05_users_forget_and_reset_password(
         assert outbox[0]['To'] == f'{new_user.email}'
         message = b64decode('\n'.join(outbox[0].get_payload()[0].as_string().split('\n')[4:10])).decode()
         pattern = re.compile(r'http\S+')
-        token = pattern.search(message).group().split('/')[-1]
-        url_confirm_res_password = test_app.url_path_for('confirm_reset_token', reset_token=token)
+        reset_code = pattern.search(message).group().split('/')[-1]
+        url_confirm_res_password = test_app.url_path_for('confirm_reset_token', reset_code=reset_code)
         response = await async_client.get(url_confirm_res_password)
         assert response.status_code == HTTPStatus.OK
         response_data = response.json()
         assert 'access_token' in response_data
         data = {
-            'new_password': 'new_test_password',
-            're_new_password': 'new_test_password'
+            'new_password': 'new_reset_test_password',
+            're_new_password': 'new_reset_test_password'
         }
         url_res_password = test_app.url_path_for('reset_password')
-        async_client.headers = {'Authorization': 'Bearer ' + token}
+        async_client.headers = {'Authorization': 'Bearer ' + response_data.get('access_token')}
+        url_get_users = test_app.url_path_for('get_users')
+        response = await async_client.get(
+            url_get_users
+        )
+        assert response.status_code == HTTPStatus.UNAUTHORIZED
         response = await async_client.patch(url_res_password, json=data)
         assert response.status_code == HTTPStatus.OK
-        wrong_data = {
-            'new_password': 'new_test_password',
-            're_new_password': 'new_test_password1'
-        }
-        response = await async_client.patch(url_res_password, json=wrong_data)
-        assert response.status_code == HTTPStatus.BAD_REQUEST
+        response = await async_client.patch(url_res_password, json=data)
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
 
 @pytest.mark.asyncio
-async def test_06_users_delete_admin(
+async def test_06_users_change_password(
+        auth_async_client: AsyncClient,
+        test_app: FastAPI,
+):
+    data = {
+        'old_password': 'test_password_auth',
+        'new_password': 'new_test_password_auth',
+        're_new_password': 'new_test_password_auth'
+    }
+    url = test_app.url_path_for('change_password')
+    response = await auth_async_client.patch(url, json=data)
+    assert response.status_code == HTTPStatus.OK
+    data_reverse = {
+        'old_password': 'new_test_password_auth',
+        'new_password': 'test_password_auth',
+        're_new_password': 'test_password_auth'
+    }
+    response = await auth_async_client.patch(url, json=data_reverse)
+    assert response.status_code == HTTPStatus.OK
+
+
+@pytest.mark.asyncio
+async def test_07_users_delete_admin(
         auth_async_admin_client: AsyncClient,
         auth_async_client: AsyncClient,
         new_user: User,
@@ -189,7 +212,7 @@ async def test_06_users_delete_admin(
 
 
 @pytest.mark.asyncio
-async def test_07_users_me_get(
+async def test_08_users_me_get(
         auth_async_client: AsyncClient,
         async_client: AsyncClient,
         test_app: FastAPI
@@ -215,7 +238,7 @@ async def test_07_users_me_get(
 
 
 @pytest.mark.asyncio
-async def test_08_users_me_patch(
+async def test_09_users_me_patch(
         auth_async_client: AsyncClient,
         async_client: AsyncClient,
         test_app: FastAPI

@@ -59,6 +59,7 @@ class ResetToken(Token):
 class ResetPasswordResponse(UserDelete):
     pass
 
+
 class ChangePasswordResponse(ResetPasswordResponse):
     pass
 
@@ -76,6 +77,6 @@ class ResetPassword(BaseModel):
             )
         return value
 
+
 class ChangePassword(ResetPassword):
     old_password: str
-

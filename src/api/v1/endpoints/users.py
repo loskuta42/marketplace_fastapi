@@ -9,7 +9,10 @@ from fastapi_mail import MessageSchema, MessageType
 from src.db.db import get_session
 from src.schemas import users as user_schema
 from src.services.base import user_crud
-from src.services.authorization import get_current_user
+from src.services.authorization import (
+    get_current_user,
+    get_current_user_for_reset_password
+)
 from src.models.models import User
 from src.tools.users import (
     check_user_by_id,
@@ -18,13 +21,14 @@ from src.tools.users import (
     check_for_duplicating_user,
     check_user_by_email
 )
-from src.tools.reset_password import (
+from src.tools.patch_password import (
+    get_reset_code,
+    get_user_by_reset_code,
     get_reset_token,
-    get_user_by_reset_token,
-    get_auth_token_for_reset_password,
-    reset_password_for_user
+    reset_password_for_user,
+    change_password_for_user,
 )
-from src.core.config import app_settings, mail_config
+from src.core.config import app_settings
 
 logger = logging.getLogger('users')
 
@@ -164,7 +168,7 @@ async def get_personal_info(
         *,
         db: AsyncSession = Depends(get_session),
         current_user: User = Depends(get_current_user)
-):
+) -> Any:
     """
     Get personal current user info.
     """
@@ -183,7 +187,7 @@ async def patch_personal_info(
         db: AsyncSession = Depends(get_session),
         current_user: User = Depends(get_current_user),
         user_in: user_schema.UserUpgrade
-):
+) -> Any:
     """
     Get personal current user info.
     """
@@ -206,16 +210,16 @@ async def forget_password(
         *,
         db: AsyncSession = Depends(get_session),
         user_in: user_schema.ForgetPasswordRequestBody
-):
+) -> Any:
     """
     Send email for password reset.
     """
     from src.main import app, fast_mail
     user_obj = await check_user_by_email(db=db, user_in=user_in)
-    reset_token = await get_reset_token(db=db, user_in=user_in)
+    reset_code = await get_reset_code(db=db, user_in=user_in)
     url = ('http://'+app_settings.project_host + ':' +
            str(app_settings.project_port) +
-           app.url_path_for('confirm_reset_token', reset_token=reset_token))
+           app.url_path_for('confirm_reset_token', reset_code=reset_code))
     email_data = {
         'username': user_obj.username,
         'url': url
@@ -232,7 +236,7 @@ async def forget_password(
 
 
 @router.get(
-    '/reset-password/{reset_token}',
+    '/reset-password/{reset_code}',
     status_code=status.HTTP_200_OK,
     response_model=user_schema.ResetToken,
     description='Confirm reset token and return access token'
@@ -240,30 +244,42 @@ async def forget_password(
 async def confirm_reset_token(
         *,
         db: AsyncSession = Depends(get_session),
-        reset_token: str
-):
-    user = await get_user_by_reset_token(db=db, reset_token=reset_token)
-    token = get_auth_token_for_reset_password(user)
+        reset_code: str
+) -> Any:
+    user = await get_user_by_reset_code(db=db, reset_code=reset_code)
+    token = await get_reset_token(db=db, user=user)
     return token
 
 
 @router.patch(
     '/reset-password/',
+    status_code=status.HTTP_200_OK,
     response_model=user_schema.ResetPasswordResponse,
     description='Reset password for user'
 )
 async def reset_password(
         *,
         db: AsyncSession = Depends(get_session),
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(get_current_user_for_reset_password),
         user_in: user_schema.ResetPassword
-):
+) -> Any:
     user = await reset_password_for_user(db=db, user=current_user, user_in=user_in)
     logger.info('Password successfully reset for user - %s', user.username)
-    return {'info': 'Password successfully reset.'}
+    return {'info': 'Password has been successfully reset.'}
 
-# TODO
-# @router.patch(
-#     '/change-password/',
-#     response_model=user_schema
-# )
+
+@router.patch(
+    '/change-password/',
+    status_code=status.HTTP_200_OK,
+    response_model=user_schema.ChangePasswordResponse,
+    description='Change password for auth user.'
+)
+async def change_password(
+        *,
+        db: AsyncSession = Depends(get_session),
+        current_user: User = Depends(get_current_user),
+        user_in: user_schema.ChangePassword
+) -> Any:
+    user = await change_password_for_user(db=db, user=current_user, user_in=user_in)
+    logger.info('Password successfully reset for user - %s', user.username)
+    return {'info': 'Password has been successfully changed.'}
