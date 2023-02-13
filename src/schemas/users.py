@@ -4,8 +4,13 @@ from typing import Optional
 from pydantic import EmailStr, UUID1, BaseModel, validator
 from fastapi import HTTPException, status
 
-from .auth import ORM, Token
+from .auth import Token
 from src.models.enums import UserRoles
+
+
+class ORM(BaseModel):
+    class Config:
+        orm_mode = True
 
 
 class User(ORM):

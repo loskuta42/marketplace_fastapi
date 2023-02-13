@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Column, String, DateTime, Integer
+from sqlalchemy import Column, String, DateTime, Integer, Text, event, ForeignKey, Float
+from sqlalchemy.orm import relationship, backref
 from sqlalchemy_utils import UUIDType, EmailType, ChoiceType
+from slugify import slugify
 
 from src.db.db import Base
 from .enums import UserRoles
@@ -29,3 +31,30 @@ class User(Base):
     @property
     def is_staff(self):
         return self.is_admin or self.is_moderator
+
+
+class Category(Base):
+    __tablename__ = 'categories'
+    id = Column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
+    name = Column(String(75), nullable=False, unique=True)
+    slug = Column(String(75))
+    created_at = Column(DateTime, index=True, default=datetime.utcnow)
+    description = Column(Text(255), nullable=True)
+    parent_id = Column(UUIDType(binary=False), ForeignKey('categories.id'))
+    children = relationship('Category', backref=backref('parent', remote_side=[id]))
+
+    @staticmethod
+    def generate_slug(target, value, oldvalue, initiator):
+        if value and (not target.slug or value != oldvalue):
+            target.slug = slugify(value)
+
+
+class Item(Base):
+    __tablename__ = 'items'
+    id = Column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
+    name = Column(String(75), nullable=False)
+
+
+
+event.listen(Category.name, 'set', Category.generate_slug, retval=False)
+
