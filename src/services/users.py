@@ -1,9 +1,9 @@
-from typing import TypeVar, Generic, Type, Optional, Any, Union
+from typing import TypeVar, Generic, Type, Optional, Any
 
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
+from sqlalchemy import select
 
 from src.db.db import Base
 from src.tools.password import get_password_hash
@@ -56,7 +56,7 @@ class RepositoryUserDB(
     async def get_by_username(
             self,
             db: AsyncSession,
-            obj_in: Union[CreateSchemaType, UpdateSchemaType],
+            obj_in: CreateSchemaType | UpdateSchemaType,
     ) -> Optional[ModelType]:
         obj_in_data = jsonable_encoder(obj_in)
         statement = select(
@@ -70,11 +70,7 @@ class RepositoryUserDB(
     async def get_by_email(
             self,
             db: AsyncSession,
-            obj_in: Union[
-                CreateSchemaType,
-                UpdateSchemaType,
-                ForgetPasswordSchemaType
-            ]
+            obj_in: CreateSchemaType | UpdateSchemaType | ForgetPasswordSchemaType
     ) -> Optional[ModelType]:
         obj_in_data = jsonable_encoder(obj_in)
         statement = select(
@@ -132,9 +128,9 @@ class RepositoryUserDB(
             db: AsyncSession,
             *,
             user_obj: ModelType,
-            user_in: Union[UpdateSchemaType, dict[str, Any]]
+            obj_in: UpdateSchemaType | dict[str, Any]
     ) -> ModelType:
-        obj_in_data = jsonable_encoder(user_in, exclude_none=True)
+        obj_in_data = jsonable_encoder(obj_in, exclude_none=True)
 
         for key, value in obj_in_data.items():
             setattr(user_obj, key, value)

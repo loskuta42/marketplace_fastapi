@@ -11,7 +11,7 @@ async def check_user_by_id(db: AsyncSession, user_id: str) -> User:
     user_obj = await user_crud.get_by_id(db=db, user_id=user_id)
     if not user_obj:
         raise HTTPException(
-            status_code=status.HTTP_404_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail='User not found.'
         )
     return user_obj
@@ -37,7 +37,7 @@ async def check_for_duplicating_user(
         user_in: user_schema.UserUpgrade,
         db: AsyncSession,
         user_obj: User
-):
+) -> None:
     user_in_data = jsonable_encoder(user_in, exclude_none=True)
     if 'email' in user_in_data:
         user = await user_crud.get_by_email(db=db, obj_in=user_in)
@@ -62,7 +62,7 @@ async def check_user_by_email(
     user_obj = await user_crud.get_by_email(db=db, obj_in=user_in)
     if not user_obj:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail='User not found.'
         )
     return user_obj

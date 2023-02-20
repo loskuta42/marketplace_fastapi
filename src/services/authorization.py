@@ -1,6 +1,6 @@
 import logging
 from datetime import timedelta, datetime
-from typing import Optional, Union
+from typing import Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -131,7 +131,7 @@ async def get_current_user_for_reset_password(
 
 
 async def get_token(db: AsyncSession, username: str, password: str):
-    user: Union[User, bool] = await authenticate_user(db, username, password)
+    user: User | bool = await authenticate_user(db, username, password)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,

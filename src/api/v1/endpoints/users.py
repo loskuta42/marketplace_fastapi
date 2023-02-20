@@ -16,7 +16,6 @@ from src.services.authorization import (
 from src.models.models import User
 from src.tools.users import (
     check_user_by_id,
-    check_staff_or_owner_permission,
     check_staff_permission,
     check_for_duplicating_user,
     check_user_by_email
@@ -30,6 +29,7 @@ from src.tools.patch_password import (
 )
 from src.core.config import app_settings
 
+
 logger = logging.getLogger('users')
 
 router = APIRouter()
@@ -37,7 +37,7 @@ router = APIRouter()
 
 @router.post(
     '/',
-    response_model=user_schema.UserRegisterResponse,
+    response_model=user_schema.UserInDB,
     status_code=status.HTTP_201_CREATED,
     description='Create new user.'
 )
@@ -117,13 +117,13 @@ async def patch_user(
     """
     Patch user info.
     """
-    user_obj = await check_user_by_id(db=db, user_id=user_id)
     check_staff_permission(cur_user_obj=current_user)
+    user_obj = await check_user_by_id(db=db, user_id=user_id)
     await check_for_duplicating_user(db=db, user_in=user_in, user_obj=user_obj)
     user_obj_patched = await user_crud.patch(
         db=db,
         user_obj=user_obj,
-        user_in=user_in
+        obj_in=user_in
     )
     logger.info(f'Partial update {user_obj.username} info.')
     return user_obj_patched
@@ -148,8 +148,8 @@ async def delete_user(
     """
     Delete user.
     """
-    user_obj = await check_user_by_id(db=db, user_id=user_id)
     check_staff_permission(cur_user_obj=current_user)
+    user_obj = await check_user_by_id(db=db, user_id=user_id)
     await user_crud.delete(db=db, user_obj=user_obj)
     return JSONResponse(
         status_code=status.HTTP_200_OK,
@@ -195,7 +195,7 @@ async def patch_personal_info(
     user_obj_patched = await user_crud.patch(
         db=db,
         user_obj=current_user,
-        user_in=user_in
+        obj_in=user_in
     )
     logger.info(f'Partial update {current_user.username} info.')
     return user_obj_patched

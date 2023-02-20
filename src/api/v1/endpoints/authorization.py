@@ -1,4 +1,5 @@
 import logging.config
+from typing import Any
 
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
@@ -22,7 +23,8 @@ async def login_ui_for_access_token(
         *,
         db: AsyncSession = Depends(get_session),
         form_data: OAuth2PasswordRequestForm = Depends()
-):
+) -> Any:
+    """Endpoint for login in swagger UI."""
     access_token = await get_token(
         db=db,
         username=form_data.username,
@@ -41,7 +43,8 @@ async def get_token_for_user(
         *,
         db: AsyncSession = Depends(get_session),
         obj_in: user_schema.UserAuth
-):
+) -> Any:
+    """Get token for user."""
     username, password = obj_in.username, obj_in.password
     access_token = await get_token(
         db=db,

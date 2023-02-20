@@ -1,6 +1,6 @@
 import logging.config
 from datetime import timedelta
-from typing import Union, Any
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from jose import JWTError, jwt
@@ -18,7 +18,7 @@ logger = logging.getLogger('reset_password')
 
 
 async def get_reset_code(db: AsyncSession, user_in: users_schema.ForgetPasswordRequestBody):
-    user: Union[User, bool] = await user_crud.get_by_email(db=db, obj_in=user_in)
+    user: User | bool = await user_crud.get_by_email(db=db, obj_in=user_in)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_400_UNAUTHORIZED,
@@ -70,10 +70,8 @@ async def get_reset_token(db: AsyncSession, user: User):
 async def reset_password_for_user(
         db: AsyncSession,
         user: User,
-        user_in: Union[
-            users_schema.ResetPassword,
-            users_schema.ChangePassword
-        ]) -> User:
+        user_in: users_schema.ResetPassword | users_schema.ChangePassword
+) -> User:
     new_password = jsonable_encoder(user_in)['new_password']
     user.hashed_password = get_password_hash(new_password)
     user.reset_token = None

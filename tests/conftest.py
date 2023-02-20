@@ -3,8 +3,7 @@ import time
 
 import pytest
 import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from httpx import AsyncClient
 from fastapi import FastAPI
 
@@ -44,8 +43,8 @@ def engine():
 
 @pytest.fixture(scope='session')
 def async_session(engine):
-    return sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
+    return async_sessionmaker(
+        engine, expire_on_commit=False
     )
 
 
@@ -66,8 +65,8 @@ async def create_base(engine):
 
 @pytest_asyncio.fixture(scope='session')
 async def test_app(engine, create_base):
-    async_session = sessionmaker(
-        engine, class_=AsyncSession, expire_on_commit=False
+    async_session = async_sessionmaker(
+        engine, expire_on_commit=False
     )
 
     async def get_test_session() -> AsyncSession:
