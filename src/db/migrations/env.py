@@ -10,7 +10,18 @@ from alembic import context
 
 from src.db.db import Base
 from src.core.config import app_settings
-from src.models.models import User
+# from src.models.models import (
+#     User,
+#     Genre,
+#     Publisher,
+#     Developer,
+#     Game,
+#     GenreGame,
+#     DeveloperGame,
+#     PublisherGame,
+#     Platform
+# )
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
