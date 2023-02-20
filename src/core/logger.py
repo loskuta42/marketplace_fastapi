@@ -59,6 +59,10 @@ LOGGING = {
         'reset_password': {
             'handlers': ['console'],
             'level': 'INFO'
+        },
+        'genres': {
+            'handlers': ['console'],
+            'level': 'INFO'
         }
     },
     'root': {
