@@ -10,6 +10,7 @@ from src.schemas import genres as genre_schema
 from src.db.db import get_session
 from src.services.authorization import get_current_user
 from src.services.base import genre_crud
+from src.tools.base import check_required_fields
 from src.tools.users import check_staff_permission
 from src.tools.genres import check_genre_by_id, check_duplicating_genre
 
@@ -41,7 +42,9 @@ async def create_genre(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Genre with this name exists.'
         )
+    print('---before')
     genre = await genre_crud.create(db=db, obj_in=genre_in)
+    print('---after', genre.games)
     logger.info('Create genre - %s, by user - %s', genre.name, current_user.username)
     return genre
 

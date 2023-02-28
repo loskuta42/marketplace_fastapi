@@ -77,10 +77,11 @@ class RepositoryGenreDB(
             db: AsyncSession,
             obj_in: CreateSchemaType | UpdateSchemaType,
     ) -> Optional[ModelType]:
+        obj_in_data = jsonable_encoder(obj_in)
         statement = select(
             self._model
         ).where(
-            self._model.name == obj_in['name']
+            self._model.name == obj_in_data['name']
         )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
@@ -90,10 +91,11 @@ class RepositoryGenreDB(
             db: AsyncSession,
             obj_in: CreateSchemaType | UpdateSchemaType,
     ) -> Optional[ModelType]:
+        obj_in_data = jsonable_encoder(obj_in)
         statement = select(
             self._model
         ).where(
-            self._model.slug == obj_in['slug']
+            self._model.slug == obj_in_data['slug']
         )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()

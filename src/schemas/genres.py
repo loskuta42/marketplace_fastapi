@@ -9,7 +9,6 @@ from .users import ORM
 class GenreCreate(ORM):
     name: str
     description: str
-    games: list = []
 
 
 class GenreUpdate(GenreCreate):
@@ -20,6 +19,7 @@ class GenreInDB(GenreCreate):
     id: UUID1
     created_at: datetime
     slug: str
+    games: list = []
 
 
 class GenreMulti(BaseModel):

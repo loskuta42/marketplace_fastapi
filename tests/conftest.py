@@ -1,5 +1,4 @@
 import asyncio
-import time
 
 import pytest
 import pytest_asyncio
@@ -10,8 +9,8 @@ from fastapi import FastAPI
 from src.db.db import Base, get_session
 from src.core.config import app_settings
 from src.main import app
-from src.services.base import user_crud
-from src.models.models import User
+from src.services.base import user_crud, genre_crud
+from src.models.models import User, Genre
 from src.models.enums import UserRoles
 
 DATABASE_URL = 'sqlite+aiosqlite:///./test.db'
@@ -147,3 +146,14 @@ async def new_admin(gen_async_session: AsyncSession) -> User:
     db = gen_async_session
     user_admin = await user_crud.create(db=db, obj_in=data)
     return user_admin
+
+
+@pytest_asyncio.fixture(scope='session')
+async def new_genre(gen_async_session: AsyncSession) -> Genre:
+    data = {
+        'name': 'test_genre',
+        'description': 'test_genre_description'
+    }
+    db = gen_async_session
+    genre_obj = await genre_crud.create(db=db, obj_in=data)
+    return genre_obj

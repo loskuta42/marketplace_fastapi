@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 
 from sqlalchemy import String, DateTime, Integer, Text, event, ForeignKey, Float
 from sqlalchemy.orm import relationship, Mapped, mapped_column, WriteOnlyMapped
@@ -51,7 +51,7 @@ class Genre(Base):
     description: Mapped[Optional[str]] = mapped_column(Text(255), nullable=True)
     # parent_id = Column(UUIDType(binary=False), ForeignKey('categories.id'))
     # children = relationship('Genre', backref=backref('parent', remote_side=[id]))
-    games: Mapped[Optional[list['Game']]] = relationship(secondary='genres_games', back_populates='genres')
+    games: Mapped[List['Game']] = relationship(secondary='genres_games', back_populates='genres', lazy='joined')
 
     @staticmethod
     def generate_slug(target, value, oldvalue, initiator):
@@ -66,7 +66,7 @@ class Publisher(Base):
     id: Mapped[uuid] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     country: Mapped[Optional[str]] = mapped_column(String(150))
-    games: Mapped[Optional[list['Game']]] = relationship(secondary='publishers_games', back_populates='publishers')
+    games: Mapped[List['Game']] = relationship(secondary='publishers_games', back_populates='publishers')
 
 
 class Developer(Base):
@@ -76,7 +76,7 @@ class Developer(Base):
     id: Mapped[uuid] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     country: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
-    games: Mapped[Optional[list['Game']]] = relationship(
+    games: Mapped[List['Game']] = relationship(
         secondary='developers_games',
         back_populates='developers'
     )
@@ -92,13 +92,13 @@ class Game(Base):
     price: Mapped[float] = mapped_column(Float(precision=2, asdecimal=True))
     discount: Mapped[float] = mapped_column(Float(precision=2, asdecimal=True), nullable=True, default=0.00)
     description: Mapped[str] = mapped_column(Text(500), nullable=False)
-    genres: Mapped[list['Genre']] = relationship(secondary='genres_games', back_populates='games')
+    genres: Mapped[List['Genre']] = relationship(secondary='genres_games', back_populates='games', lazy='joined')
     release_date: Mapped[datetime] = mapped_column(DateTime, index=True, nullable=False)
-    developers: Mapped[list['Developer']] = relationship(
+    developers: Mapped[List['Developer']] = relationship(
         secondary='developers_games',
         back_populates='games'
     )
-    publishers: Mapped[Optional[list['Publisher']]] = relationship(
+    publishers: Mapped[List['Publisher']] = relationship(
         secondary='publishers_games',
         back_populates='games'
     )
@@ -111,8 +111,8 @@ class GenreGame(Base):
 
     __tablename__ = 'genres_games'
 
-    genre_id: Mapped[uuid] = mapped_column(UUIDType(binary=False), ForeignKey('genres.id'), primary_key=True)
-    game_id: Mapped[uuid] = mapped_column(UUIDType(binary=False), ForeignKey('games.id'), primary_key=True)
+    genre_id: Mapped[uuid] = mapped_column(ForeignKey('genres.id'), primary_key=True)
+    game_id: Mapped[uuid] = mapped_column(ForeignKey('games.id'), primary_key=True)
 
 
 class DeveloperGame(Base):
