@@ -66,7 +66,7 @@ class Publisher(Base):
     id: Mapped[uuid] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     country: Mapped[Optional[str]] = mapped_column(String(150))
-    games: Mapped[List['Game']] = relationship(secondary='publishers_games', back_populates='publishers')
+    games: Mapped[List['Game']] = relationship(secondary='publishers_games', back_populates='publishers', lazy='joined')
 
 
 class Developer(Base):
@@ -78,7 +78,8 @@ class Developer(Base):
     country: Mapped[Optional[str]] = mapped_column(String(150), nullable=True)
     games: Mapped[List['Game']] = relationship(
         secondary='developers_games',
-        back_populates='developers'
+        back_populates='developers',
+        lazy='joined'
     )
 
 
@@ -96,14 +97,16 @@ class Game(Base):
     release_date: Mapped[datetime] = mapped_column(DateTime, index=True, nullable=False)
     developers: Mapped[List['Developer']] = relationship(
         secondary='developers_games',
-        back_populates='games'
+        back_populates='games',
+        lazy='joined'
     )
     publishers: Mapped[List['Publisher']] = relationship(
         secondary='publishers_games',
-        back_populates='games'
+        back_populates='games',
+        lazy='joined'
     )
     platform_id: Mapped[uuid] = mapped_column(UUIDType(binary=False), ForeignKey('platforms.id'))
-    platform: Mapped['Platform'] = relationship(back_populates='games')
+    platform: Mapped['Platform'] = relationship(back_populates='games', lazy='joined')
 
 
 class GenreGame(Base):
@@ -140,7 +143,7 @@ class Platform(Base):
 
     id: Mapped[uuid] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
     name: Mapped[str] = mapped_column(String(75), nullable=False)
-    games: WriteOnlyMapped['Game'] = relationship(order_by='Game.release_date')
+    games: WriteOnlyMapped['Game'] = relationship(order_by='Game.release_date', lazy='joined')
 
 
 event.listen(Genre.name, 'set', Genre.generate_slug, retval=False)

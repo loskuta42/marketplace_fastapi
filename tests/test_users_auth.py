@@ -8,6 +8,7 @@ from fastapi import FastAPI
 
 from src.models.models import User
 from src.main import fast_mail
+from src.schemas import users as users_schema
 
 
 @pytest.mark.asyncio
@@ -29,7 +30,7 @@ async def test_01_users_create(test_app: FastAPI, async_client: AsyncClient):
     fields = input_data.keys()
     for field_name in fields:
         assert response_data.get(field_name) == input_data[field_name], (
-            'Make sure that the POST request `/api/v1/users/{id}` '
+            'Make sure that the POST request `/api/v1/users/` '
             f'with the correct data returns {field_name}'
         )
 
@@ -37,19 +38,24 @@ async def test_01_users_create(test_app: FastAPI, async_client: AsyncClient):
 @pytest.mark.asyncio
 async def test_02_users_get(
         auth_async_client: AsyncClient,
+        async_client: AsyncClient,
         new_user: User,
         test_app: FastAPI
 ):
     user_id = new_user.id
     url = test_app.url_path_for('get_user', user_id=user_id)
+    response = await async_client.get(url)
+    assert response.status_code == HTTPStatus.UNAUTHORIZED, (
+        'Check that GET request to `/api/v1/users/{user_id}` with no auth data returns 401 status'
+    )
     response = await auth_async_client.get(
         url
     )
     assert response.status_code == HTTPStatus.OK, (
-        'Check that GET request to `/api/v1/users/{user_id}` with data returns 200 status'
+        'Check that GET request to `/api/v1/users/{user_id}` with auth returns 200 status'
     )
     response_data = response.json()
-    fields = ['username', 'created_at', 'email', 'role']
+    fields = users_schema.UserInDB.__fields__.keys()
     for field in fields:
         assert field in response_data, (
             'Make sure that the GET request `/api/v1/users/{user_id}` '
@@ -61,8 +67,7 @@ async def test_02_users_get(
 async def test_03_users_get_multi(
         auth_async_client: AsyncClient,
         async_client: AsyncClient,
-        test_app: FastAPI,
-        base_url: str
+        test_app: FastAPI
 ):
     url = test_app.url_path_for('get_users')
     response = await async_client.get(
@@ -82,11 +87,11 @@ async def test_03_users_get_multi(
         'Check that GET request to `/api/v1/users/` with auth returns correct data'
     )
     user_data = response_data.pop()
-    fields = ['username', 'created_at', 'email', 'role']
+    fields = users_schema.UserInDB.__fields__.keys()
     for field in fields:
         assert field in user_data, (
             'Make sure that the GET request `/api/v1/users/` '
-            f'with the correct data returns `{field}`'
+            f'with the correct data returns `{field}` field'
         )
 
 
@@ -121,6 +126,13 @@ async def test_04_users_patch_admin(
     assert data['username'] == response_data['username'], (
         'Make sure that the PATCH request `/api/v1/users/{user_id}` '
         'with the correct data returns username'
+    )
+    url = test_app.url_path_for('get_user', user_id=user_id)
+    response = await auth_async_admin_client.get(url)
+    response_data = response.json()
+    assert data['username'] == response_data['username'], (
+        'Make sure that the PATCH request `/api/v1/users/{user_id}` '
+        'actually patch the data'
     )
 
 
@@ -196,7 +208,7 @@ async def test_07_users_delete_admin(
         test_app: FastAPI
 ):
     user_id = new_user.id
-    url = test_app.url_path_for('patch_user', user_id=user_id)
+    url = test_app.url_path_for('delete_user', user_id=user_id)
     response = await auth_async_client.delete(
         url=url,
     )
@@ -208,6 +220,11 @@ async def test_07_users_delete_admin(
     )
     assert response.status_code == HTTPStatus.OK, (
         'Check that DELETE request to `/api/v1/users/{user_id}` with admin rights returns 200 status code'
+    )
+    url = test_app.url_path_for('get_user', user_id=user_id)
+    response = await auth_async_client.get(url)
+    assert response.status_code == HTTPStatus.NOT_FOUND, (
+        'Check that GET request to `/api/v1/users/{user_id}` for deleted user_id returns 404 status code'
     )
 
 

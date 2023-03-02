@@ -42,9 +42,7 @@ async def create_genre(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail='Genre with this name exists.'
         )
-    print('---before')
     genre = await genre_crud.create(db=db, obj_in=genre_in)
-    print('---after', genre.games)
     logger.info('Create genre - %s, by user - %s', genre.name, current_user.username)
     return genre
 

@@ -4,6 +4,7 @@ from typing import TypeVar, Generic, Type, Optional, Any
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from fastapi.encoders import jsonable_encoder
 
 from src.db.db import Base
@@ -68,6 +69,8 @@ class RepositoryGenreDB(
             self._model
         ).where(
             self._model.id == genre_id
+        ).options(
+            selectinload(self._model.games)
         )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
@@ -82,6 +85,8 @@ class RepositoryGenreDB(
             self._model
         ).where(
             self._model.name == obj_in_data['name']
+        ).options(
+            selectinload(self._model.games)
         )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
@@ -96,6 +101,8 @@ class RepositoryGenreDB(
             self._model
         ).where(
             self._model.slug == obj_in_data['slug']
+        ).options(
+            selectinload(self._model.games)
         )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
@@ -107,7 +114,9 @@ class RepositoryGenreDB(
             skip=0,
             limit=100
     ) -> list[ModelType]:
-        statement = select(self._model).offset(skip).limit(limit)
+        statement = select(self._model).offset(skip).limit(limit).options(
+            selectinload(self._model.games)
+        )
         results = await db.execute(statement=statement)
         return results.scalars().all()
 

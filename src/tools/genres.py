@@ -8,10 +8,10 @@ from src.schemas import genres as genre_schema
 
 
 async def check_genre_by_id(db: AsyncSession, genre_id: str) -> Genre:
-    genre_obj = await genre_crud.get_by_id(db=db, user_id=genre_id)
+    genre_obj = await genre_crud.get_by_id(db=db, genre_id=genre_id)
     if not genre_obj:
         raise HTTPException(
-            status_code=status.HTTP_404_BAD_REQUEST,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail='Genre not found.'
         )
     return genre_obj
