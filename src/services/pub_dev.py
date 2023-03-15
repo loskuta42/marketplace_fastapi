@@ -1,28 +1,26 @@
 from typing import TypeVar, Generic, Type, Optional, Any
 
-from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from fastapi.encoders import jsonable_encoder
 
 from src.db.db import Base
-from src.tools.password import get_password_hash
 from .repository_base import Repository
 
 
 ModelType = TypeVar('ModelType', bound=Base)
 CreateSchemaType = TypeVar('CreateSchemaType', bound=BaseModel)
 UpdateSchemaType = TypeVar('UpdateSchemaType', bound=BaseModel)
-ForgetPasswordSchemaType = TypeVar('ForgetPasswordSchemaType', bound=BaseModel)
 
 
-class RepositoryUserDB(
+class RepositoryDevPubDB(
     Repository,
     Generic[
         ModelType,
         CreateSchemaType,
-        UpdateSchemaType,
-        ForgetPasswordSchemaType
+        UpdateSchemaType
     ]
 ):
     def __init__(
@@ -31,43 +29,33 @@ class RepositoryUserDB(
     ):
         self._model = model
 
-    async def get_by_username(
-            self,
-            db: AsyncSession,
-            obj_in: CreateSchemaType | UpdateSchemaType,
-    ) -> Optional[ModelType]:
-        obj_in_data = jsonable_encoder(obj_in)
-        statement = select(
-            self._model
-        ).where(
-            self._model.username == obj_in_data['username']
-        )
-        results = await db.execute(statement=statement)
-        return results.scalar_one_or_none()
-
-    async def get_by_email(
-            self,
-            db: AsyncSession,
-            obj_in: CreateSchemaType | UpdateSchemaType | ForgetPasswordSchemaType
-    ) -> Optional[ModelType]:
-        obj_in_data = jsonable_encoder(obj_in)
-        statement = select(
-            self._model
-        ).where(
-            self._model.email == obj_in_data['email']
-        )
-        results = await db.execute(statement=statement)
-        return results.scalar_one_or_none()
-
     async def get_by_id(
             self,
             db: AsyncSession,
-            user_id: Optional[str]
+            entity_id: str
     ) -> Optional[ModelType]:
         statement = select(
             self._model
         ).where(
-            self._model.id == user_id
+            self._model.id == entity_id
+        ).options(
+            selectinload(self._model.games)
+        )
+        results = await db.execute(statement=statement)
+        return results.scalar_one_or_none()
+
+    async def get_by_name(
+            self,
+            db: AsyncSession,
+            obj_in: CreateSchemaType | UpdateSchemaType
+    ) -> Optional[ModelType]:
+        obj_in_data = jsonable_encoder(obj_in)
+        statement = select(
+            self._model
+        ).where(
+            self._model.name == obj_in_data['name']
+        ).options(
+            selectinload(self._model.games)
         )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
@@ -79,14 +67,13 @@ class RepositoryUserDB(
             skip=0,
             limit=100
     ) -> list[ModelType]:
-        statement = select(self._model).offset(skip).limit(limit)
+        statement = select(
+            self._model
+        ).offset(skip).limit(limit).options(
+            selectinload(self._model.games)
+        )
         results = await db.execute(statement=statement)
         return results.scalars().all()
-
-    def create_obj(self, obj_in_data: dict):
-        password = obj_in_data.pop('password')
-        obj_in_data['hashed_password'] = get_password_hash(password)
-        return self._model(**obj_in_data)
 
     async def create(
             self,
@@ -95,7 +82,7 @@ class RepositoryUserDB(
             obj_in: CreateSchemaType
     ) -> ModelType:
         obj_in_data = jsonable_encoder(obj_in)
-        db_obj = self.create_obj(obj_in_data)
+        db_obj = self._model(**obj_in_data)
         db.add(db_obj)
         await db.commit()
         await db.refresh(db_obj)
@@ -105,23 +92,23 @@ class RepositoryUserDB(
             self,
             db: AsyncSession,
             *,
-            user_obj: ModelType,
+            obj: ModelType,
             obj_in: UpdateSchemaType | dict[str, Any]
     ) -> ModelType:
         obj_in_data = jsonable_encoder(obj_in, exclude_none=True)
 
         for key, value in obj_in_data.items():
-            setattr(user_obj, key, value)
-        db.add(user_obj)
+            setattr(obj, key, value)
+        db.add(obj)
         await db.commit()
-        await db.refresh(user_obj)
-        return user_obj
+        await db.refresh(obj)
+        return obj
 
     async def delete(
             self,
             db: AsyncSession,
             *,
-            user_obj: ModelType
+            obj: ModelType
     ) -> None:
-        await db.delete(user_obj)
+        await db.delete(obj)
         await db.commit()

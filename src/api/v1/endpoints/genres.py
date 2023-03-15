@@ -15,7 +15,7 @@ from src.tools.users import check_staff_permission
 from src.tools.genres import check_genre_by_id, check_duplicating_genre
 
 
-logger = logging.getLogger('users')
+logger = logging.getLogger('genres')
 
 router = APIRouter()
 
@@ -106,6 +106,7 @@ async def patch_genre(
     """
     check_staff_permission(cur_user_obj=current_user)
     genre_obj = await check_genre_by_id(db=db, genre_id=genre_id)
+    genre_name_before = genre_obj.name
     await check_duplicating_genre(genre_in=genre_in, db=db, genre_obj=genre_obj)
     genre_obj_patched = await genre_crud.patch(
         db=db,
@@ -113,9 +114,10 @@ async def patch_genre(
         genre_obj=genre_obj
     )
     logger.info(
-        'Partial update %s (new name is %s) info.',
-        genre_obj.name,
-        genre_obj_patched.name if genre_obj.name != genre_obj_patched.name else genre_obj.name)
+        'Partial update genre %s (new name is %s) info.',
+        genre_name_before,
+        genre_obj_patched.name if genre_name_before != genre_obj_patched.name else genre_name_before
+    )
     return genre_obj_patched
 
 

@@ -66,7 +66,11 @@ class Publisher(Base):
     id: Mapped[uuid] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
     name: Mapped[str] = mapped_column(String(150), nullable=False)
     country: Mapped[Optional[str]] = mapped_column(String(150))
-    games: Mapped[List['Game']] = relationship(secondary='publishers_games', back_populates='publishers', lazy='joined')
+    games: Mapped[List['Game']] = relationship(
+        secondary='publishers_games',
+        back_populates='publishers',
+        lazy='joined'
+    )
 
 
 class Developer(Base):

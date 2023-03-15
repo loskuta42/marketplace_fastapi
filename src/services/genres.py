@@ -1,4 +1,3 @@
-from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Type, Optional, Any
 
 from pydantic import BaseModel
@@ -8,37 +7,7 @@ from sqlalchemy.orm import selectinload
 from fastapi.encoders import jsonable_encoder
 
 from src.db.db import Base
-
-
-class Repository(ABC):
-
-    @abstractmethod
-    def get_by_id(self, *args, **kwargs):
-        ...
-
-    @abstractmethod
-    def get_by_name(self, *args, **kwargs):
-        ...
-
-    @abstractmethod
-    def get_by_slug(self, *args, **kwargs):
-        ...
-
-    @abstractmethod
-    def get_multi(self, *args, **kwargs):
-        ...
-
-    @abstractmethod
-    def create(self, *args, **kwargs):
-        ...
-
-    @abstractmethod
-    def patch(self, *args, **kwargs):
-        ...
-
-    @abstractmethod
-    def delete(self, *args, **kwargs):
-        ...
+from .repository_base import Repository
 
 
 ModelType = TypeVar('ModelType', bound=Base)
