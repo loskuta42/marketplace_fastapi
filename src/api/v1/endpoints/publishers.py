@@ -87,7 +87,7 @@ async def get_publisher(
 
 
 @router.patch(
-    '/publisher_id',
+    '/{publisher_id}',
     response_model=pub_dev_schema.PubDevInDB,
     status_code=status.HTTP_200_OK,
     description='Partial update publisher info.'
