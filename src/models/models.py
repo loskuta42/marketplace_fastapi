@@ -37,7 +37,7 @@ class User(Base):
         return self.is_admin or self.is_moderator
 
     def __repr__(self):
-        return f'<User>: username:{ self.username }'
+        return f'<User>: username:{self.username}'
 
 
 class Genre(Base):
@@ -48,7 +48,7 @@ class Genre(Base):
     name: Mapped[str] = mapped_column(String(75), nullable=False, unique=True)
     slug: Mapped[str] = mapped_column(String(75))
     created_at: Mapped[datetime] = mapped_column(DateTime, index=True, default=datetime.utcnow)
-    description: Mapped[Optional[str]] = mapped_column(Text(255), nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     # parent_id = Column(UUIDType(binary=False), ForeignKey('categories.id'))
     # children = relationship('Genre', backref=backref('parent', remote_side=[id]))
     games: Mapped[List['Game']] = relationship(secondary='genres_games', back_populates='genres', lazy='joined')
@@ -96,7 +96,7 @@ class Game(Base):
     name: Mapped[str] = mapped_column(String(75), nullable=False)
     price: Mapped[float] = mapped_column(Float(precision=2, asdecimal=True))
     discount: Mapped[float] = mapped_column(Float(precision=2, asdecimal=True), nullable=True, default=0.00)
-    description: Mapped[str] = mapped_column(Text(500), nullable=False)
+    description: Mapped[str] = mapped_column(String(500), nullable=False)
     genres: Mapped[List['Genre']] = relationship(secondary='genres_games', back_populates='games', lazy='joined')
     release_date: Mapped[datetime] = mapped_column(DateTime, index=True, nullable=False)
     developers: Mapped[List['Developer']] = relationship(
@@ -109,8 +109,11 @@ class Game(Base):
         back_populates='games',
         lazy='joined'
     )
-    platform_id: Mapped[uuid] = mapped_column(UUIDType(binary=False), ForeignKey('platforms.id'))
-    platform: Mapped['Platform'] = relationship(back_populates='games', lazy='joined')
+    platforms: Mapped[List['Platform']] = relationship(
+        secondary='platforms_games',
+        back_populates='games',
+        lazy='joined'
+    )
 
 
 class GenreGame(Base):
@@ -140,6 +143,15 @@ class PublisherGame(Base):
     game_id: Mapped[uuid] = mapped_column(UUIDType(binary=False), ForeignKey('games.id'), primary_key=True)
 
 
+class PlatformGame(Base):
+    """Platforms to games many-to-many model."""
+
+    __tablename__ = 'platforms_games'
+
+    platform_id: Mapped[uuid] = mapped_column(UUIDType(binary=False), ForeignKey('platforms.id'), primary_key=True)
+    game_id: Mapped[uuid] = mapped_column(UUIDType(binary=False), ForeignKey('games.id'), primary_key=True)
+
+
 class Platform(Base):
     """Platform db model."""
 
@@ -147,7 +159,11 @@ class Platform(Base):
 
     id: Mapped[uuid] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
     name: Mapped[str] = mapped_column(String(75), nullable=False)
-    games: WriteOnlyMapped['Game'] = relationship(order_by='Game.release_date', lazy='joined')
+    games: Mapped[List['Game']] = relationship(
+        secondary='platforms_games',
+        back_populates='platforms',
+        lazy='joined'
+    )
 
 
 event.listen(Genre.name, 'set', Genre.generate_slug, retval=False)

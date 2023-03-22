@@ -49,7 +49,7 @@ async def create_developer(
     '/',
     response_model=pub_dev_schema.PubDevMulti,
     status_code=status.HTTP_200_OK,
-    description='Get list og developers.'
+    description='Get list of developers.'
 )
 async def get_developers(
         *,

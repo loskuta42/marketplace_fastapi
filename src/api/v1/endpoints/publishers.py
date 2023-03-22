@@ -49,7 +49,7 @@ async def create_publisher(
     '/',
     response_model=pub_dev_schema.PubDevMulti,
     status_code=status.HTTP_200_OK,
-    description='Get list og publishers.'
+    description='Get list of publishers.'
 )
 async def get_publishers(
         *,
