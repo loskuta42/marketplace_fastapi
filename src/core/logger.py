@@ -63,6 +63,14 @@ LOGGING = {
         'genres': {
             'handlers': ['console'],
             'level': 'INFO'
+        },
+        'publishers': {
+            'handlers': ['console'],
+            'level': 'INFO'
+        },
+        'developers': {
+            'handlers': ['console'],
+            'level': 'INFO'
         }
     },
     'root': {

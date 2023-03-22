@@ -9,8 +9,8 @@ from fastapi import FastAPI
 from src.db.db import Base, get_session
 from src.core.config import app_settings
 from src.main import app
-from src.services.base import user_crud, genre_crud, publisher_crud
-from src.models.models import User, Genre, Publisher
+from src.services.base import user_crud, genre_crud, publisher_crud, developer_crud
+from src.models.models import User, Genre, Publisher, Developer
 from src.models.enums import UserRoles
 
 DATABASE_URL = 'sqlite+aiosqlite:///./test.db'
@@ -168,3 +168,14 @@ async def new_publisher(gen_async_session: AsyncSession) -> Publisher:
     db = gen_async_session
     publisher_obj = await publisher_crud.create(db=db, obj_in=data)
     return publisher_obj
+
+
+@pytest_asyncio.fixture(scope='session')
+async def new_developer(gen_async_session: AsyncSession) -> Developer:
+    data = {
+        'name': 'test_developer',
+        'country': 'test_developer_country'
+    }
+    db = gen_async_session
+    developer_obj = await developer_crud.create(db=db, obj_in=data)
+    return developer_obj
