@@ -22,8 +22,8 @@ async def check_duplicating_platform(
         db: AsyncSession,
         platform_obj: Platform
 ) -> None:
-    publisher_in_data = jsonable_encoder(platform_in, exclude_none=True)
-    if 'name' in publisher_in_data:
+    platform_in_data = jsonable_encoder(platform_in, exclude_none=True)
+    if 'name' in platform_in_data:
         platform = await platform_crud.get_by_name(db=db, obj_in=platform_in)
         if platform and platform_obj.id != platform.id:
             raise HTTPException(

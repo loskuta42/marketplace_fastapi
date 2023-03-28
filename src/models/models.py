@@ -2,8 +2,8 @@ import uuid
 from datetime import datetime
 from typing import Optional, List
 
-from sqlalchemy import String, DateTime, Integer, Text, event, ForeignKey, Float
-from sqlalchemy.orm import relationship, Mapped, mapped_column, WriteOnlyMapped
+from sqlalchemy import String, DateTime, Integer, event, ForeignKey, Float
+from sqlalchemy.orm import relationship, Mapped, mapped_column
 from sqlalchemy_utils import UUIDType, EmailType, ChoiceType
 from slugify import slugify
 
@@ -42,6 +42,7 @@ class User(Base):
 
 class Genre(Base):
     """Genre db model."""
+
     __tablename__ = 'genres'
 
     id: Mapped[uuid] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
@@ -61,6 +62,7 @@ class Genre(Base):
 
 class Publisher(Base):
     """Publisher db model."""
+
     __tablename__ = 'publishers'
 
     id: Mapped[uuid] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
@@ -75,6 +77,7 @@ class Publisher(Base):
 
 class Developer(Base):
     """Developer db model."""
+
     __tablename__ = 'developers'
 
     id: Mapped[uuid] = mapped_column(UUIDType(binary=False), primary_key=True, default=uuid.uuid1)
