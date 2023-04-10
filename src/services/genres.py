@@ -9,7 +9,6 @@ from fastapi.encoders import jsonable_encoder
 from src.db.db import Base
 from .repository_base import Repository
 
-
 ModelType = TypeVar('ModelType', bound=Base)
 CreateSchemaType = TypeVar('CreateSchemaType', bound=BaseModel)
 UpdateSchemaType = TypeVar('UpdateSchemaType', bound=BaseModel)
@@ -59,6 +58,21 @@ class RepositoryGenreDB(
         )
         results = await db.execute(statement=statement)
         return results.scalar_one_or_none()
+
+    async def get_multiple_by_names(
+            self,
+            db: AsyncSession,
+            names: list[str],
+    ):
+        statement = select(
+            self._model
+        ).filter(
+            self._model.name.in_(names)
+        ).options(
+            selectinload(self._model.games)
+        )
+        results = await db.execute(statement=statement)
+        return results.scalars().all()
 
     async def get_by_slug(
             self,

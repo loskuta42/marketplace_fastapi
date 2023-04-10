@@ -6,8 +6,8 @@ from pydantic import BaseModel, condecimal
 
 from .users import ORM
 from .genres import GenreInDB
-from .platforms import PlatformInDB
 from .pub_dev import PubDevInDB
+from .platforms import PlatformInDB
 
 
 class GameCreate(ORM):
@@ -16,10 +16,10 @@ class GameCreate(ORM):
     discount: condecimal(ge=Decimal('0.00')) = Decimal('0.00')
     description: str
     release_date: datetime
-    genres: list[GenreInDB]
-    developers: list[PubDevInDB]
-    publishers: list[PubDevInDB]
-    platforms: list[PlatformInDB]
+    genres: list[str]
+    developers: list[str]
+    publishers: list[str]
+    platforms: list[str]
     
 
 class GameUpdate(GameCreate):
@@ -28,7 +28,15 @@ class GameUpdate(GameCreate):
 
 class GameInDB(GameCreate):
     id: UUID1
+    genres: list[GenreInDB]
+    developers: list[PubDevInDB]
+    publishers: list[PubDevInDB]
+    platforms: list[PlatformInDB]
 
 
 class GameMulti(BaseModel):
     __root__: list[GameInDB]
+
+
+class GameDelete(BaseModel):
+    info: str

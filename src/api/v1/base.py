@@ -6,6 +6,7 @@ from .endpoints.genres import router as genres_router
 from .endpoints.publishers import router as publishers_router
 from .endpoints.developers import router as developers_router
 from .endpoints.platforms import router as platforms_router
+from .endpoints.games import router as games_router
 
 
 
@@ -45,4 +46,10 @@ api_router.include_router(
     platforms_router,
     prefix='/platforms',
     tags=['platforms']
+)
+
+api_router.include_router(
+    games_router,
+    prefix='/games',
+    tags=['games']
 )

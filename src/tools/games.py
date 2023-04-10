@@ -25,7 +25,11 @@ async def check_duplicating_game(
     game_in_data = jsonable_encoder(game_in, exclude_none=True)
     if 'name' in game_in_data:
         game = await game_crud.get_by_name(db=db, obj_in=game_in)
-        if game and game_obj.id != game.id and sorted(game_obj.platforms, key=lambda x: x.name) != game.platforms:
+        if game and game_obj.id != game.id and [
+            platform.name for platform in game_obj.platforms
+        ].sort() != [
+            platform.name for platform in game.platforms
+        ].sort():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail='Game with this name already exists'
