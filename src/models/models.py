@@ -59,6 +59,9 @@ class Genre(Base):
         if value and (not target.slug or value != oldvalue):
             target.slug = slugify(value)
 
+    def __repr__(self):
+        return f'<Genre>: id:{self.id}, name:{self.name}'
+
 
 class Publisher(Base):
     """Publisher db model."""
@@ -74,6 +77,9 @@ class Publisher(Base):
         lazy='joined'
     )
 
+    def __repr__(self):
+        return f'<Publisher>: id:{self.id}, name:{self.name}'
+
 
 class Developer(Base):
     """Developer db model."""
@@ -88,6 +94,9 @@ class Developer(Base):
         back_populates='developers',
         lazy='joined'
     )
+
+    def __repr__(self):
+        return f'<Developer>: id:{self.id}, name:{self.name}'
 
 
 class Game(Base):
@@ -117,6 +126,9 @@ class Game(Base):
         back_populates='games',
         lazy='joined'
     )
+
+    def __repr__(self):
+        return f'<Game>: id:{self.id}, name:{self.name}'
 
 
 class GenreGame(Base):
@@ -167,6 +179,9 @@ class Platform(Base):
         back_populates='platforms',
         lazy='joined'
     )
+
+    def __repr__(self):
+        return f'<Platform>: id:{self.id}, name:{self.name}'
 
 
 event.listen(Genre.name, 'set', Genre.generate_slug, retval=False)

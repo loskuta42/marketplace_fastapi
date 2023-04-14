@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 import pytest
 import pytest_asyncio
@@ -9,9 +10,10 @@ from fastapi import FastAPI
 from src.db.db import Base, get_session
 from src.core.config import app_settings
 from src.main import app
-from src.services.base import user_crud, genre_crud, publisher_crud, developer_crud, platform_crud
-from src.models.models import User, Genre, Publisher, Developer, Platform
+from src.services.base import user_crud, genre_crud, publisher_crud, developer_crud, platform_crud, game_crud
+from src.models.models import User, Genre, Publisher, Developer, Platform, Game
 from src.models.enums import UserRoles
+from src.schemas import games as games_schema
 
 DATABASE_URL = 'sqlite+aiosqlite:///./test.db'
 
@@ -189,3 +191,53 @@ async def new_platform(gen_async_session: AsyncSession) -> Platform:
     db = gen_async_session
     platform_obj = await platform_crud.create(db=db, obj_in=data)
     return platform_obj
+
+
+@pytest_asyncio.fixture(scope='session')
+async def new_game(gen_async_session: AsyncSession) -> Game:
+    db = gen_async_session
+    genre_obj = await genre_crud.create(
+        db=db,
+        obj_in={
+            'name': 'test_game_genre',
+            'description': 'test_game_genre_description'
+        }
+    )
+    publisher_obj = await publisher_crud.create(
+        db=db,
+        obj_in={
+            'name': 'test_game_publisher',
+            'country': 'test_game_publisher_country'
+        }
+    )
+    developer_obj = await developer_crud.create(
+        db=db,
+        obj_in={
+            'name': 'test_game_developer',
+            'country': 'test_game_developer_country'
+        }
+    )
+    platform_obj = await platform_crud.create(
+        db=db,
+        obj_in={
+            'name': 'test_game_platform',
+        }
+    )
+    d_data = {
+            'name': 'test_game',
+            'price': 0.11,
+            'discount': 0.12,
+            'description': 'test_game_description',
+            'genres': [genre_obj.name],
+            'release_date': '06.05.2005',
+            'developers': [developer_obj.name],
+            'publishers': [publisher_obj.name],
+            'platforms': [platform_obj.name]
+        }
+    data = games_schema.GameCreate(**d_data)
+
+    game_obj = await game_crud.create(
+        db=db,
+        obj_in=data
+    )
+    return game_obj

@@ -71,6 +71,10 @@ LOGGING = {
         'developers': {
             'handlers': ['console'],
             'level': 'INFO'
+        },
+        'games': {
+            'handlers': ['console'],
+            'level': 'INFO'
         }
     },
     'root': {

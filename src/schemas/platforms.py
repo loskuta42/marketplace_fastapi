@@ -11,12 +11,16 @@ class PlatformCreate(ORM):
 
 
 class PlatformUpdate(PlatformCreate):
-    pass
+    name: str | None = None
 
 
 class PlatformInDB(PlatformCreate):
     id: UUID1
     games: list = []
+
+
+class Platform(PlatformCreate):
+    id: UUID1
 
 
 class PlatformMulti(BaseModel):

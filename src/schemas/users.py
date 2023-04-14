@@ -23,8 +23,8 @@ class UserRegister(User):
 
 
 class UserUpgrade(User):
-    username: Optional[str]
-    email: Optional[str]
+    username: str | None = None
+    email:  EmailStr | None = None
 
 
 class UserAuth(UserRegister):

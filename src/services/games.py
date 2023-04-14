@@ -8,7 +8,7 @@ from fastapi.encoders import jsonable_encoder
 
 from src.db.db import Base
 from .repository_base import Repository
-from .base import developer_crud, genre_crud, platform_crud, publisher_crud
+from src.models.models import Genre, Publisher, Platform, Developer
 
 ModelType = TypeVar('ModelType', bound=Base)
 CreateSchemaType = TypeVar('CreateSchemaType', bound=BaseModel)
@@ -87,19 +87,30 @@ class RepositoryGameDB(
     async def _object_in_edit(
             self,
             db: AsyncSession,
-            obj_in_data: dict
+            obj_in: CreateSchemaType
     ):
-        name_to_funcs = {
-            'genres': genre_crud,
-            'developers': developer_crud,
-            'publishers': publisher_crud,
-            'platforms': platform_crud
+        obj_in_data = jsonable_encoder(obj_in, exclude_none=True)
+        obj_in_data['release_date'] = obj_in.release_date
+        name_to_model = {
+            'genres': Genre,
+            'developers': Developer,
+            'publishers': Publisher,
+            'platforms': Platform
         }
         for key in obj_in_data.keys():
-            if key in name_to_funcs:
-                obj_in_data[key] = await name_to_funcs[
-                    key
-                ].get_multiple_by_names(db, obj_in_data[key])
+            if key in name_to_model:
+                model = name_to_model[key]
+                names = obj_in_data[key]
+                print(model, names)
+                statement = select(
+                    model
+                ).filter(
+                    model.name.in_(tuple(names))
+                ).options(
+                    selectinload(model.games)
+                )
+                results = await db.execute(statement=statement)
+                obj_in_data[key] = results.scalars().all()
         return obj_in_data
 
     async def create(
@@ -108,8 +119,8 @@ class RepositoryGameDB(
             *,
             obj_in: CreateSchemaType
     ) -> ModelType:
-        obj_in_data = jsonable_encoder(obj_in)
-        obj_in_data = await self._object_in_edit(db=db, obj_in_data=obj_in_data)
+        obj_in_data = await self._object_in_edit(db=db, obj_in=obj_in)
+
         db_obj = self._model(**obj_in_data)
         db.add(db_obj)
         await db.commit()
@@ -123,8 +134,7 @@ class RepositoryGameDB(
             obj: ModelType,
             obj_in: UpdateSchemaType | dict[str, Any]
     ) -> ModelType:
-        obj_in_data = jsonable_encoder(obj_in, exclude_none=True)
-        obj_in_data = await self._object_in_edit(db=db, obj_in_data=obj_in_data)
+        obj_in_data = await self._object_in_edit(db=db, obj_in=obj_in)
         for key, value in obj_in_data.items():
             setattr(obj, key, value)
         db.add(obj)

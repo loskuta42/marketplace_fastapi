@@ -10,12 +10,17 @@ class PubDevCreate(ORM):
 
 
 class PubDevUpdate(PubDevCreate):
-    pass
+    name: str | None = None
+    country: str | None = None
 
 
 class PubDevInDB(PubDevCreate):
     id: UUID1
     games: list = []
+
+
+class PubDev(PubDevCreate):
+    id: UUID1
 
 
 class PubDevMulti(BaseModel):

@@ -11,8 +11,9 @@ class GenreCreate(ORM):
     description: str
 
 
-class GenreUpdate(GenreCreate):
-    pass
+class GenreUpdate(ORM):
+    name: str | None = None
+    description: str | None = None
 
 
 class GenreInDB(GenreCreate):
@@ -20,6 +21,12 @@ class GenreInDB(GenreCreate):
     created_at: datetime
     slug: str
     games: list = []
+
+
+class Genre(GenreCreate):
+    id: UUID1
+    created_at: datetime
+    slug: str
 
 
 class GenreMulti(BaseModel):
